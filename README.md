@@ -1,5 +1,4 @@
-# Corp/BS Translator 🏢↔️🧑
-
+# Corp/BS Translator
 > AI-powered two-way translator between corporate jargon and plain human English.
 
 <img width="2559" height="1248" alt="image" src="https://github.com/user-attachments/assets/6d1e41df-ff39-49e3-936f-dff05a187ae7" />
