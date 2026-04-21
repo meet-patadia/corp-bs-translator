@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corp/BS Translator</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #d4f200;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #666;
+    --corp: #ff6b35;
+    --human: #d4f200;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.4;
+  }
+
+  /* ── Ticker ── */
+  .ticker {
+    background: var(--accent);
+    color: #000;
+    padding: 8px 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .ticker-inner {
+    display: inline-flex;
+    animation: ticker 25s linear infinite;
+  }
+  .ticker-item {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    padding: 0 32px;
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .ticker-sep { color: rgba(0,0,0,0.3); }
+  @keyframes ticker {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    background: rgba(14,14,14,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 50;
+  }
+  .logo { display: flex; align-items: baseline; gap: 10px; }
+  .logo-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+  }
+  .logo-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    background: var(--accent);
+    color: #000;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-weight: 500;
+    letter-spacing: 1px;
+  }
+  .rate-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 14px;
+    border-radius: 20px;
+  }
+  .rate-badge span { color: var(--accent); }
+
+  /* ── Hero ── */
+  .hero {
+    text-align: center;
+    padding: 60px 40px 32px;
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(52px, 8vw, 96px);
+    line-height: 0.95;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+  .corp-word { color: var(--corp); }
+  .human-word { color: var(--accent); }
+  .hero-subtitle {
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ── Mode Toggle ── */
+  .mode-toggle-wrap {
+    display: flex;
+    justify-content: center;
+    margin: 32px 0 0;
+  }
+  .mode-toggle {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px;
+    gap: 4px;
+  }
+  .mode-btn {
+    padding: 10px 28px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+    background: transparent;
+    color: var(--muted);
+  }
+  .mode-btn.active {
+    background: var(--corp);
+    color: #000;
+  }
+  .mode-btn.active.human-mode {
+    background: var(--accent);
+  }
+  .mode-arrow {
+    font-size: 16px;
+    color: var(--border);
+    padding: 0 6px;
+    pointer-events: none;
+    transition: transform 0.3s;
+  }
+  .swap-icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 6px 10px;
+    transition: all 0.2s;
+    margin: 0 4px;
+  }
+  .swap-icon-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ── Tone Selector ── */
+  .tone-wrap {
+    max-width: 1100px;
+    margin: 24px auto 0;
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .tone-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+  .tone-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tone-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .tone-pill:hover { border-color: #444; color: var(--text); }
+  .tone-pill.active {
+    background: var(--surface2);
+    border-color: #555;
+    color: var(--text);
+  }
+
+  /* ── Translator ── */
+  .translator {
+    max-width: 1100px;
+    margin: 24px auto 0;
+    padding: 0 40px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 0;
+    align-items: start;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .panel:focus-within { border-color: #383838; }
+  .panel-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-corp { background: var(--corp); }
+  .dot-human { background: var(--accent); }
+  .corp-label { color: var(--corp); }
+  .human-label { color: var(--accent); }
+  .char-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  textarea {
+    width: 100%;
+    min-height: 240px;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 20px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    resize: vertical;
+    caret-color: var(--accent);
+  }
+  textarea::placeholder { color: #2e2e2e; font-style: italic; }
+  .panel-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .paste-btn, .clear-btn, .copy-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: none;
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+  }
+  .paste-btn:hover, .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .clear-btn { border: none; }
+  .clear-btn:hover { color: var(--corp); }
+
+  /* ── Middle column ── */
+  .mid-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 58px 20px 0;
+    gap: 10px;
+  }
+  .translate-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+  .translate-btn:hover { transform: scale(1.08); background: #e5ff1a; }
+  .translate-btn:disabled {
+    background: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+    transform: none;
+  }
+  .mid-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  /* ── Output ── */
+  .output-area {
+    min-height: 240px;
+    padding: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .output-placeholder { color: #2a2a2a; font-style: italic; }
+
+  /* ── Shimmer loader ── */
+  .shimmer-wrap { padding: 20px; min-height: 240px; }
+  @keyframes shimmer {
+    0%   { background-position: -800px 0; }
+    100% { background-position:  800px 0; }
+  }
+  .shimmer-line {
+    height: 13px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    background: linear-gradient(90deg, var(--border) 25%, #2a2a2a 50%, var(--border) 75%);
+    background-size: 800px 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  /* ── Error toast ── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1e1e1e;
+    border: 1px solid var(--corp);
+    color: var(--corp);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 12px 24px;
+    border-radius: 6px;
+    z-index: 200;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Examples ── */
+  .examples {
+    max-width: 1100px;
+    margin: 40px auto 0;
+    padding: 0 40px 60px;
+  }
+  .examples-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .examples-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .examples-line { flex: 1; height: 1px; background: var(--border); }
+  .examples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+  .example-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 16px 16px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .example-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+  .example-card.corp::before { background: var(--corp); }
+  .example-card.human::before { background: var(--accent); }
+  .example-card:hover { border-color: #333; transform: translateY(-1px); }
+  .example-card .from-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 2px;
+    margin-bottom: 8px;
+    display: inline-block;
+  }
+  .corp .from-tag { background: rgba(255,107,53,0.12); color: var(--corp); }
+  .human .from-tag { background: rgba(212,242,0,0.08); color: var(--accent); }
+  .example-card .text {
+    font-size: 12px;
+    color: #aaa;
+    line-height: 1.5;
+    font-family: 'DM Mono', monospace;
+  }
+  .example-card .try-label {
+    margin-top: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #333;
+  }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-left {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .footer-left span { color: var(--accent); }
+  .footer-right {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .translator { grid-template-columns: 1fr; padding: 0 16px; }
+    .mid-col { flex-direction: row; padding: 16px 0; justify-content: center; }
+    header, .hero, .tone-wrap, .examples, footer { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Ticker -->
+<div class="ticker">
+  <div class="ticker-inner">
+    <span class="ticker-item">SYNERGY DETECTED <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">LEVERAGING CORE COMPETENCIES <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">BOILING THE OCEAN <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">MOVING THE NEEDLE <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">CIRCLING BACK OFFLINE <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">PARADIGM SHIFT INCOMING <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">SYNERGY DETECTED <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">LEVERAGING CORE COMPETENCIES <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">BOILING THE OCEAN <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">MOVING THE NEEDLE <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">CIRCLING BACK OFFLINE <span class="ticker-sep">✦</span></span>
+    <span class="ticker-item">PARADIGM SHIFT INCOMING <span class="ticker-sep">✦</span></span>
+  </div>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <span class="logo-title">CORP/BS</span>
+    <span class="logo-badge">TRANSLATOR</span>
+  </div>
+  <div class="rate-badge">
+    <span id="requests-left">100</span> / 100 daily translations left
+  </div>
+</header>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-eyebrow">✦ AI-Powered Jargon Removal ✦</div>
+  <h1 class="hero-title">
+    <span class="corp-word">CORPORATE</span><br>
+    <span class="human-word">HUMAN</span>
+  </h1>
+  <p class="hero-subtitle">
+    Decode the buzzwords. Expose the nothing-speak.<br>
+    Or wrap your plain thoughts in corporate armour.
+  </p>
+</div>
+
+<!-- Mode toggle -->
+<div class="mode-toggle-wrap">
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="left-label">🏢 Corporate</button>
+    <span class="mode-arrow">→</span>
+    <button class="mode-btn" id="right-label">🧑 Human</button>
+    <button class="swap-icon-btn" id="swap-btn" title="Swap direction">⇄</button>
+  </div>
+</div>
+
+<!-- Tone selector -->
+<div class="tone-wrap">
+  <span class="tone-label">TONE //</span>
+  <div class="tone-pills">
+    <button class="tone-pill active" data-tone="plain">Plain</button>
+    <button class="tone-pill" data-tone="sarcastic">Sarcastic</button>
+    <button class="tone-pill" data-tone="parody">Parody Mode 🔥</button>
+    <button class="tone-pill" data-tone="formal">Formal</button>
+    <button class="tone-pill" data-tone="blunt">Blunt AF</button>
+  </div>
+</div>
+
+<!-- Translator -->
+<div class="translator">
+
+  <!-- Input panel -->
+  <div class="panel" id="input-panel">
+    <div class="panel-header">
+      <span class="panel-label corp-label" id="input-panel-label">
+        <span class="dot dot-corp"></span>
+        <span id="input-label-text">Corporate Input</span>
+      </span>
+      <span class="char-count" id="char-count">0 / 1000</span>
+    </div>
+    <textarea
+      id="input-text"
+      placeholder='Paste your corporate speak here...'
+      maxlength="1000"
+    ></textarea>
+    <div class="panel-footer">
+      <button class="paste-btn" id="paste-btn">⌘ Paste</button>
+      <button class="clear-btn" id="clear-btn">Clear ×</button>
+    </div>
+  </div>
+
+  <!-- Middle -->
+  <div class="mid-col">
+    <button class="translate-btn" id="translate-btn" title="Translate">→</button>
+    <span class="mid-label">translate</span>
+  </div>
+
+  <!-- Output panel -->
+  <div class="panel" id="output-panel">
+    <div class="panel-header">
+      <span class="panel-label human-label" id="output-panel-label">
+        <span class="dot dot-human"></span>
+        <span id="output-label-text">Human Output</span>
+      </span>
+      <span class="char-count" id="output-char-count">— chars</span>
+    </div>
+    <div class="output-area" id="output">
+      <span class="output-placeholder">Your translation will appear here...</span>
+    </div>
+    <div class="panel-footer">
+      <button class="copy-btn" id="copy-btn">⌘ Copy</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Examples -->
+<div class="examples">
+  <div class="examples-header">
+    <span class="examples-title">Try these examples</span>
+    <div class="examples-line"></div>
+  </div>
+  <div class="examples-grid">
+    <div class="example-card corp" data-mode="corp_to_human" data-text="Let's circle back on this and take it offline to ideate on actionable next steps.">
+      <span class="from-tag">Corporate</span>
+      <div class="text">"Let's circle back on this and take it offline to ideate on actionable next steps."</div>
+      <div class="try-label">→ click to try</div>
+    </div>
+    <div class="example-card corp" data-mode="corp_to_human" data-text="We need to be more agile and pivot our go-to-market strategy to capture low-hanging fruit.">
+      <span class="from-tag">Corporate</span>
+      <div class="text">"We need to be more agile and pivot our go-to-market strategy to capture low-hanging fruit."</div>
+      <div class="try-label">→ click to try</div>
+    </div>
+    <div class="example-card corp" data-mode="corp_to_human" data-text="This initiative will unlock significant value creation opportunities across our entire ecosystem.">
+      <span class="from-tag">Corporate</span>
+      <div class="text">"This initiative will unlock significant value creation opportunities across our entire ecosystem."</div>
+      <div class="try-label">→ click to try</div>
+    </div>
+    <div class="example-card human" data-mode="human_to_corp" data-text="I have no idea what we're doing or why, but I'll show up to the meetings.">
+      <span class="from-tag">Human</span>
+      <div class="text">"I have no idea what we're doing or why, but I'll show up to the meetings."</div>
+      <div class="try-label">→ click to try</div>
+    </div>
+    <div class="example-card human" data-mode="human_to_corp" data-text="We fired 200 people to save money.">
+      <span class="from-tag">Human</span>
+      <div class="text">"We fired 200 people to save money."</div>
+      <div class="try-label">→ click to try</div>
+    </div>
+    <div class="example-card human" data-mode="human_to_corp" data-text="This project is a mess and nobody knows who's in charge.">
+      <span class="from-tag">Human</span>
+      <div class="text">"This project is a mess and nobody knows who's in charge."</div>
+      <div class="try-label">→ click to try</div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-left">
+    Powered by <span>Gemini Flash</span> · Free tier · 100 translations/day
+  </div>
+  <div class="footer-right">CORP/BS Translator v1.0</div>
+</footer>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const API_BASE = 'http://localhost:3000';
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  let mode = 'corp_to_human'; // or 'human_to_corp'
+  let tone = 'plain';
+  let requestsLeft = 100;
+
+  // ── Elements ───────────────────────────────────────────────────────────────
+  const inputText      = document.getElementById('input-text');
+  const charCount      = document.getElementById('char-count');
+  const outputEl       = document.getElementById('output');
+  const outputCharCount= document.getElementById('output-char-count');
+  const translateBtn   = document.getElementById('translate-btn');
+  const copyBtn        = document.getElementById('copy-btn');
+  const pasteBtn       = document.getElementById('paste-btn');
+  const clearBtn       = document.getElementById('clear-btn');
+  const swapBtn        = document.getElementById('swap-btn');
+  const leftLabel      = document.getElementById('left-label');
+  const rightLabel     = document.getElementById('right-label');
+  const inputLabelText = document.getElementById('input-label-text');
+  const outputLabelText= document.getElementById('output-label-text');
+  const inputPanelLabel= document.getElementById('input-panel-label');
+  const outputPanelLabel=document.getElementById('output-panel-label');
+  const requestsLeftEl = document.getElementById('requests-left');
+  const toastEl        = document.getElementById('toast');
+
+  // ── Char counter ───────────────────────────────────────────────────────────
+  inputText.addEventListener('input', () => {
+    charCount.textContent = `${inputText.value.length} / 1000`;
+  });
+
+  // ── Tone pills ─────────────────────────────────────────────────────────────
+  document.querySelectorAll('.tone-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.tone-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      tone = pill.dataset.tone;
+    });
+  });
+
+  // ── Swap direction ─────────────────────────────────────────────────────────
+  function updateModeUI() {
+    if (mode === 'corp_to_human') {
+      leftLabel.textContent  = '🏢 Corporate';
+      rightLabel.textContent = '🧑 Human';
+      leftLabel.classList.add('active');
+      leftLabel.classList.remove('human-mode');
+      rightLabel.classList.remove('active');
+      inputLabelText.textContent  = 'Corporate Input';
+      outputLabelText.textContent = 'Human Output';
+      inputPanelLabel.className  = 'panel-label corp-label';
+      outputPanelLabel.className = 'panel-label human-label';
+      inputPanelLabel.querySelector('.dot').className  = 'dot dot-corp';
+      outputPanelLabel.querySelector('.dot').className = 'dot dot-human';
+      inputText.placeholder = 'Paste your corporate speak here...\n\ne.g. "We need to leverage synergies to move the needle on key KPIs going forward."';
+    } else {
+      leftLabel.textContent  = '🧑 Human';
+      rightLabel.textContent = '🏢 Corporate';
+      leftLabel.classList.add('active', 'human-mode');
+      rightLabel.classList.remove('active');
+      inputLabelText.textContent  = 'Human Input';
+      outputLabelText.textContent = 'Corporate Output';
+      inputPanelLabel.className  = 'panel-label human-label';
+      outputPanelLabel.className = 'panel-label corp-label';
+      inputPanelLabel.querySelector('.dot').className  = 'dot dot-human';
+      outputPanelLabel.querySelector('.dot').className = 'dot dot-corp';
+      inputText.placeholder = 'Type plain English here...\n\ne.g. "We fired 200 people to save money."';
+    }
+    // clear output when swapping
+    outputEl.innerHTML = '<span class="output-placeholder">Your translation will appear here...</span>';
+    outputCharCount.textContent = '— chars';
+  }
+
+  swapBtn.addEventListener('click', () => {
+    mode = mode === 'corp_to_human' ? 'human_to_corp' : 'corp_to_human';
+    updateModeUI();
+  });
+
+  // ── Paste ──────────────────────────────────────────────────────────────────
+  pasteBtn.addEventListener('click', async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      inputText.value = text.slice(0, 1000);
+      charCount.textContent = `${inputText.value.length} / 1000`;
+    } catch {
+      showToast('Clipboard access denied — paste manually with Ctrl+V');
+    }
+  });
+
+  // ── Clear ──────────────────────────────────────────────────────────────────
+  clearBtn.addEventListener('click', () => {
+    inputText.value = '';
+    charCount.textContent = '0 / 1000';
+    outputEl.innerHTML = '<span class="output-placeholder">Your translation will appear here...</span>';
+    outputCharCount.textContent = '— chars';
+  });
+
+  // ── Copy ───────────────────────────────────────────────────────────────────
+  copyBtn.addEventListener('click', async () => {
+    const text = outputEl.innerText;
+    if (!text || text === 'Your translation will appear here...') return;
+    try {
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = '✓ Copied!';
+      setTimeout(() => { copyBtn.textContent = '⌘ Copy'; }, 2000);
+    } catch {
+      showToast('Could not copy — please select and copy manually.');
+    }
+  });
+
+  // ── Example cards ──────────────────────────────────────────────────────────
+  document.querySelectorAll('.example-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const cardMode = card.dataset.mode;
+      const text     = card.dataset.text;
+      if (mode !== cardMode) {
+        mode = cardMode;
+        updateModeUI();
+      }
+      inputText.value = text;
+      charCount.textContent = `${text.length} / 1000`;
+      inputText.focus();
+    });
+  });
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), 3500);
+  }
+
+  // ── Shimmer ────────────────────────────────────────────────────────────────
+  function showShimmer() {
+    outputEl.innerHTML = `
+      <div class="shimmer-wrap">
+        <div class="shimmer-line" style="width:82%"></div>
+        <div class="shimmer-line" style="width:61%"></div>
+        <div class="shimmer-line" style="width:75%"></div>
+        <div class="shimmer-line" style="width:50%"></div>
+      </div>`;
+  }
+
+  // ── Translate ──────────────────────────────────────────────────────────────
+  translateBtn.addEventListener('click', translate);
+
+  // Also trigger on Ctrl+Enter
+  inputText.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) translate();
+  });
+
+  async function translate() {
+    const text = inputText.value.trim();
+
+    if (!text) {
+      showToast('Please enter some text first.');
+      return;
+    }
+
+    translateBtn.disabled = true;
+    showShimmer();
+
+    try {
+      const res = await fetch(`${API_BASE}/api/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, mode, tone }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Rate limit hit
+        if (res.status === 429) {
+          showToast('Daily limit reached! Come back tomorrow.');
+          requestsLeft = 0;
+          requestsLeftEl.textContent = '0';
+        } else {
+          showToast(data.error || 'Something went wrong.');
+        }
+        outputEl.innerHTML = '<span class="output-placeholder">Your translation will appear here...</span>';
+        return;
+      }
+
+      outputEl.textContent = data.translation;
+      outputCharCount.textContent = `${data.translation.length} chars`;
+
+      // Update counter (rough estimate — real tracking is on the server)
+      if (requestsLeft > 0) {
+        requestsLeft--;
+        requestsLeftEl.textContent = requestsLeft;
+      }
+
+    } catch (err) {
+      showToast('Cannot reach server. Is it running?');
+      outputEl.innerHTML = '<span class="output-placeholder">Your translation will appear here...</span>';
+    } finally {
+      translateBtn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>
