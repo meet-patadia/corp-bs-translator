@@ -41,8 +41,8 @@ https://corp-bs-translator.netlify.app/
 | Backend | Node.js + Express |
 | AI | Google Gemini 2.5 Flash |
 | Rate Limiting | express-rate-limit |
-| Frontend Hosting | Netlify (free) |
-| Backend Hosting | Railway (free tier) |
+| Frontend Hosting | Netlify |
+| Backend Hosting | Render |
 
 ---
 
@@ -116,17 +116,20 @@ corp-bs-translator/
 
 ## Deployment
 
-### Backend → Railway
+### Backend → Render
 
 1. Push repo to GitHub
-2. Go to [railway.app](https://railway.app) and create a new project from your GitHub repo
+2. Go to [render.com](https://render.com) and create a new Web Service from your GitHub repo
 3. Set **Root Directory** to `backend`
-4. Add environment variables in Railway dashboard:
+4. Set **Build Command** to `npm install`
+5. Set **Start Command** to `node server.js`
+6. Add environment variables:
    ```
    GEMINI_API_KEY=your_key_here
-   PORT=3000
+   PORT=10000
    ```
-5. Generate a domain under Settings → Networking
+7. Save and Deploy
+
 
 ### Frontend → Netlify
 
