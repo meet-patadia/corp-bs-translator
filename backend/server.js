@@ -1,8 +1,10 @@
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
 const rateLimit = require("express-rate-limit");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 const dotenv = require("dotenv");
 console.log('KEY:', process.env.GEMINI_API_KEY?.slice(0, 8));
