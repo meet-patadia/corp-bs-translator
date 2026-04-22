@@ -33,6 +33,8 @@ const limiter = rateLimit({
 
 app.use("/api/translate", limiter);
 
+console.log('FULL KEY:', process.env.GEMINI_API_KEY);
+
 // ─── Gemini Setup ─────────────────────────────────────────────────────────────
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
